@@ -5,6 +5,7 @@ go 1.22.5
 require (
 	github.com/pkg/errors v0.9.1
 	github.com/spf13/cobra v1.8.1
+	go.uber.org/mock v0.4.0
 )
 
 require (
@@ -16,7 +17,9 @@ require (
 	github.com/opencontainers/image-spec v1.1.0 // indirect
 	github.com/sirupsen/logrus v1.9.3 // indirect
 	golang.org/x/exp v0.0.0-20240506185415-9bf2ced13842 // indirect
+	golang.org/x/mod v0.17.0 // indirect
 	golang.org/x/sys v0.20.0 // indirect
+	golang.org/x/tools v0.21.0 // indirect
 )
 
 require (
