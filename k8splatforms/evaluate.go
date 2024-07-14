@@ -13,7 +13,7 @@ import (
 
 type Row struct {
 	Namespace            string
-	ApiVersion           string
+	APIVersion           string
 	Kind                 string
 	Name                 string
 	SubName              string
@@ -109,7 +109,7 @@ func evaluateVirtualPod(
 			return Row{}, errors.Wrap(err, "inspecting image platforms")
 		}
 		platforms2 := dockerplatforms.DockerPlatformList(platforms).Variantless()
-		imagePlatformDetails[container.Image] = platforms2
+		imagePlatformDetails[container.Name] = platforms2
 		if found {
 			imagePlatforms = imagePlatforms.Intersection(platforms2)
 		} else {
@@ -122,7 +122,7 @@ func evaluateVirtualPod(
 	}
 	return Row{
 		Namespace:            obj.GetNamespace(),
-		ApiVersion:           obj.GetObjectKind().GroupVersionKind().GroupVersion().String(),
+		APIVersion:           obj.GetObjectKind().GroupVersionKind().GroupVersion().String(),
 		Kind:                 obj.GetObjectKind().GroupVersionKind().Kind,
 		Name:                 obj.GetName(),
 		SubName:              virtualPod.SubName,

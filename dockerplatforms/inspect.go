@@ -1,3 +1,4 @@
+//go:generate go run go.uber.org/mock/mockgen -source=inspect.go -destination=testing/mock_inspect.go -package=dockerplatformstesting
 package dockerplatforms
 
 import (
@@ -7,21 +8,25 @@ import (
 	"github.com/pkg/errors"
 )
 
-type PlatformInspector struct {
+type PlatformInspector interface {
+	GetPlatforms(ctx context.Context, image string) ([]DockerPlatform, error)
+}
+
+type platformInspectorImpl struct {
 	retriever ManifestRetriever
 	cache     Cache
 }
 
 // New creates a new PlatformInspector.
-func New(retriever ManifestRetriever, cache Cache) *PlatformInspector {
-	return &PlatformInspector{
+func New(retriever ManifestRetriever, cache Cache) PlatformInspector {
+	return &platformInspectorImpl{
 		retriever: retriever,
 		cache:     cache,
 	}
 }
 
 // GetPlatforms returns the list of supported platforms of the given image.
-func (p *PlatformInspector) GetPlatforms(ctx context.Context, image string) ([]DockerPlatform, error) {
+func (p *platformInspectorImpl) GetPlatforms(ctx context.Context, image string) ([]DockerPlatform, error) {
 	imageRef, err := reference.ParseNormalizedNamed(image)
 	if err != nil {
 		return nil, errors.Wrap(err, "parsing image reference")

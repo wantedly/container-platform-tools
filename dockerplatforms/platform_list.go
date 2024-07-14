@@ -132,3 +132,11 @@ func (p DockerPlatformList) Intersection(other DockerPlatformList) DockerPlatfor
 	}
 	return newList
 }
+
+func MustParseDockerPlatformList(s string) DockerPlatformList {
+	platforms, err := ParseDockerPlatformList(s)
+	if err != nil {
+		panic(err)
+	}
+	return platforms
+}
