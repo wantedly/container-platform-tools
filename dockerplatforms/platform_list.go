@@ -80,6 +80,9 @@ func (p *DockerPlatformList) UnmarshalYAML(value *yaml.Node) error {
 }
 
 func (p DockerPlatformList) Normalized() DockerPlatformList {
+	if len(p) == 0 {
+		return nil
+	}
 	normalized := make(DockerPlatformList, 0, len(p))
 	seen := make(map[DockerPlatform]struct{})
 	for _, platform := range p {

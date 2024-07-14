@@ -209,3 +209,142 @@ func TestParseDockerPlatformList(t *testing.T) {
 		}
 	}
 }
+
+func TestDockerPlatformListNormalized(t *testing.T) {
+	testcases := []struct {
+		name      string
+		platforms dockerplatforms.DockerPlatformList
+		expected  dockerplatforms.DockerPlatformList
+	}{
+		{
+			name:      "empty",
+			platforms: dockerplatforms.DockerPlatformList(nil),
+			expected:  dockerplatforms.DockerPlatformList(nil),
+		},
+		{
+			name: "single entry",
+			platforms: dockerplatforms.DockerPlatformList{
+				{
+					OS:           "linux",
+					Architecture: "amd64",
+				},
+			},
+			expected: dockerplatforms.DockerPlatformList{
+				{
+					OS:           "linux",
+					Architecture: "amd64",
+				},
+			},
+		},
+		{
+			name: "multiple entries sorted",
+			platforms: dockerplatforms.DockerPlatformList{
+				{
+					OS:           "linux",
+					Architecture: "arm64",
+				},
+				{
+					OS:           "linux",
+					Architecture: "arm",
+					Variant:      "v7",
+				},
+			},
+			expected: dockerplatforms.DockerPlatformList{
+				{
+					OS:           "linux",
+					Architecture: "arm",
+					Variant:      "v7",
+				},
+				{
+					OS:           "linux",
+					Architecture: "arm64",
+				},
+			},
+		},
+		{
+			name: "duplicate entries",
+			platforms: dockerplatforms.DockerPlatformList{
+				{
+					OS:           "linux",
+					Architecture: "arm64",
+				},
+				{
+					OS:           "linux",
+					Architecture: "arm",
+					Variant:      "v7",
+				},
+				{
+					OS:           "linux",
+					Architecture: "arm64",
+				},
+			},
+			expected: dockerplatforms.DockerPlatformList{
+				{
+					OS:           "linux",
+					Architecture: "arm",
+					Variant:      "v7",
+				},
+				{
+					OS:           "linux",
+					Architecture: "arm64",
+				},
+			},
+		},
+	}
+
+	for _, tc := range testcases {
+		t.Run(tc.name, func(t *testing.T) {
+			normalized := tc.platforms.Normalized()
+			if diff := cmp.Diff(tc.expected, normalized); diff != "" {
+				t.Errorf("unexpected normalized platform: %s", diff)
+			}
+		})
+	}
+}
+
+func TestDockerPlatformListIncludes(t *testing.T) {
+	testcases := []struct {
+		name     string
+		lhs      dockerplatforms.DockerPlatformList
+		rhs      dockerplatforms.DockerPlatformList
+		expected bool
+	}{
+		{
+			name:     "both empty",
+			lhs:      dockerplatforms.DockerPlatformList(nil),
+			rhs:      dockerplatforms.DockerPlatformList(nil),
+			expected: true,
+		},
+		{
+			name: "lhs empty",
+			lhs:  dockerplatforms.DockerPlatformList(nil),
+			rhs: dockerplatforms.DockerPlatformList{
+				{
+					OS:           "linux",
+					Architecture: "amd64",
+				},
+			},
+			expected: false,
+		},
+		{
+			name: "rhs empty",
+			lhs: dockerplatforms.DockerPlatformList{
+				{
+					OS:           "linux",
+					Architecture: "amd64",
+				},
+			},
+			rhs:      dockerplatforms.DockerPlatformList(nil),
+			expected: true,
+		},
+	}
+
+	for _, tc := range testcases {
+		t.Run(tc.name, func(t *testing.T) {
+			included := tc.lhs.Includes(tc.rhs)
+			if diff := cmp.Diff(tc.expected, included); diff != "" {
+				t.Errorf("unexpected included: %s", diff)
+			}
+		})
+	}
+}

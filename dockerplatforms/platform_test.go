@@ -189,3 +189,44 @@ func TestParseDockerPlatform(t *testing.T) {
 		}
 	}
 }
+
+func TestDockerPlatformVariantless(t *testing.T) {
+	testcases := []struct {
+		name     string
+		input    dockerplatforms.DockerPlatform
+		expected dockerplatforms.DockerPlatform
+	}{
+		{
+			name: "linux/amd64",
+			input: dockerplatforms.DockerPlatform{
+				OS:           "linux",
+				Architecture: "amd64",
+			},
+			expected: dockerplatforms.DockerPlatform{
+				OS:           "linux",
+				Architecture: "amd64",
+			},
+		},
+		{
+			name: "linux/arm/v7",
+			input: dockerplatforms.DockerPlatform{
+				OS:           "linux",
+				Architecture: "arm",
+				Variant:      "v7",
+			},
+			expected: dockerplatforms.DockerPlatform{
+				OS:           "linux",
+				Architecture: "arm",
+			},
+		},
+	}
+
+	for _, tc := range testcases {
+		t.Run(tc.name, func(t *testing.T) {
+			p := tc.input.Variantless()
+			if diff := cmp.Diff(tc.expected, p); diff != "" {
+				t.Errorf("unexpected platform: %s", diff)
+			}
+		})
+	}
+}
