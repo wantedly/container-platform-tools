@@ -5,6 +5,7 @@ import (
 
 	"github.com/pkg/errors"
 	batchv1 "k8s.io/api/batch/v1"
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
@@ -38,7 +39,7 @@ func (p JobProcessor) IsActive(obj client.Object) bool {
 
 func hasJobFinished(job *batchv1.Job) bool {
 	for _, condition := range job.Status.Conditions {
-		if condition.Type == batchv1.JobComplete || condition.Type == batchv1.JobFailed {
+		if condition.Status == corev1.ConditionTrue && (condition.Type == batchv1.JobComplete || condition.Type == batchv1.JobFailed) {
 			return true
 		}
 	}
