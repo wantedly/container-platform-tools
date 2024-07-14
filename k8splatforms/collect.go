@@ -3,7 +3,6 @@ package k8splatforms
 import (
 	"context"
 	"slices"
-	"sort"
 
 	"github.com/pkg/errors"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -103,8 +102,8 @@ func (g *objectGraph) sortObjects() {
 	connectedComponents := g.connectedComponents()
 	var newObjNames []string
 	for _, cc := range connectedComponents {
-		sort.Slice(cc, func(i, j int) bool {
-			return objectLt(g.ByName[cc[i]], g.ByName[cc[j]])
+		slices.SortFunc(cc, func(a, b string) int {
+			return objectCmp(g.ByName[a], g.ByName[b])
 		})
 		cc = g.topologicalSort(cc)
 		newObjNames = append(newObjNames, cc...)
@@ -156,8 +155,8 @@ func (g *objectGraph) topologicalSort(objNames []string) []string {
 func (g *objectGraph) topologicalSortVisit(objName string, newObjNames *[]string, visited map[string]struct{}) {
 	visited[objName] = struct{}{}
 	ownerNames := slices.Clone(g.OwnerRefs[objName])
-	sort.Slice(ownerNames, func(i, j int) bool {
-		return objectLt(g.ByName[ownerNames[i]], g.ByName[ownerNames[j]])
+	slices.SortFunc(ownerNames, func(a, b string) int {
+		return objectCmp(g.ByName[a], g.ByName[b])
 	})
 	for _, ownerName := range ownerNames {
 		if _, ok := visited[ownerName]; ok {
@@ -176,23 +175,34 @@ func (g *objectGraph) objects() []client.Object {
 	return objs
 }
 
-func objectLt(a, b client.Object) bool {
+func objectCmp(a, b client.Object) int {
 	nsA := a.GetNamespace()
 	nsB := b.GetNamespace()
-	if nsA != nsB {
-		return nsA < nsB
+	if nsA < nsB {
+		return -1
+	} else if nsA > nsB {
+		return 1
 	}
 	gvkA := a.GetObjectKind().GroupVersionKind()
 	gvkB := b.GetObjectKind().GroupVersionKind()
 	gvA := gvkA.GroupVersion()
 	gvB := gvkB.GroupVersion()
-	if gvA != gvB {
-		return gvA.String() < gvB.String()
+	if gvA.String() < gvB.String() {
+		return -1
+	} else if gvA.String() > gvB.String() {
+		return 1
 	}
-	if gvkA.Kind != gvkB.Kind {
-		return gvkA.Kind < gvkB.Kind
+	if gvkA.Kind < gvkB.Kind {
+		return -1
+	} else if gvkA.Kind > gvkB.Kind {
+		return 1
 	}
-	return a.GetName() < b.GetName()
+	if a.GetName() < b.GetName() {
+		return -1
+	} else if a.GetName() > b.GetName() {
+		return 1
+	}
+	return 0
 }
 
 func objectKey(obj client.Object) string {
