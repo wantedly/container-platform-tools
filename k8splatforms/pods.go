@@ -41,9 +41,9 @@ func podFinishedOrDeleted(pod *corev1.Pod) bool {
 }
 
 // VirtualPods implements KindProcessor.
-func (p PodProcessor) VirtualPods(obj client.Object) []corev1.PodTemplateSpec {
+func (p PodProcessor) VirtualPods(obj client.Object) []VirtualPod {
 	if pod, ok := obj.(*corev1.Pod); ok {
-		return []corev1.PodTemplateSpec{
+		return []VirtualPod{
 			{
 				ObjectMeta: pod.ObjectMeta,
 				Spec:       pod.Spec,

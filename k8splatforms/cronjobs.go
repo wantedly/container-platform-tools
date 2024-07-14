@@ -5,7 +5,6 @@ import (
 
 	"github.com/pkg/errors"
 	batchv1 "k8s.io/api/batch/v1"
-	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
@@ -38,10 +37,13 @@ func (c CronJobProcessor) IsActive(obj client.Object) bool {
 }
 
 // VirtualPods implements KindProcessor.
-func (c CronJobProcessor) VirtualPods(obj client.Object) []corev1.PodTemplateSpec {
+func (c CronJobProcessor) VirtualPods(obj client.Object) []VirtualPod {
 	if cronJob, ok := obj.(*batchv1.CronJob); ok {
-		return []corev1.PodTemplateSpec{
-			cronJob.Spec.JobTemplate.Spec.Template,
+		return []VirtualPod{
+			{
+				ObjectMeta: cronJob.Spec.JobTemplate.Spec.Template.ObjectMeta,
+				Spec:       cronJob.Spec.JobTemplate.Spec.Template.Spec,
+			},
 		}
 	}
 	return nil

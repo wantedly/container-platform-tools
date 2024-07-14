@@ -43,23 +43,27 @@ func (w WorkflowProcessor) IsActive(obj client.Object) bool {
 }
 
 // VirtualPods implements KindProcessor.
-func (w WorkflowProcessor) VirtualPods(obj client.Object) []corev1.PodTemplateSpec {
+func (w WorkflowProcessor) VirtualPods(obj client.Object) []VirtualPod {
 	if workflow, ok := obj.(*workflowv1alpha1.Workflow); ok {
 		return collectWorkflowPods(workflow.Spec)
 	}
 	return nil
 }
 
-func collectWorkflowPods(spec workflowv1alpha1.WorkflowSpec) []corev1.PodTemplateSpec {
-	var pods []corev1.PodTemplateSpec
+func collectWorkflowPods(spec workflowv1alpha1.WorkflowSpec) []VirtualPod {
+	var pods []VirtualPod
 	for _, template := range spec.Templates {
-		collectWorkflowPodsImpl(spec, template, &pods)
+		collectWorkflowPodsImpl(spec, template, "", &pods)
 	}
 	return pods
 }
-func collectWorkflowPodsImpl(spec workflowv1alpha1.WorkflowSpec, template workflowv1alpha1.Template, pods *[]corev1.PodTemplateSpec) {
+func collectWorkflowPodsImpl(spec workflowv1alpha1.WorkflowSpec, template workflowv1alpha1.Template, parentName string, pods *[]VirtualPod) {
 	// https://github.com/argoproj/argo-workflows/blob/v3.5.8/workflow/controller/workflowpod.go#L78
 
+	name := template.Name
+	if parentName != "" {
+		name = parentName + "." + name
+	}
 	if template.Container != nil || template.Script != nil {
 		var containers []corev1.Container
 		if template.Container != nil {
@@ -101,7 +105,7 @@ func collectWorkflowPodsImpl(spec workflowv1alpha1.WorkflowSpec, template workfl
 			tolerations = spec.Tolerations
 		}
 
-		*pods = append(*pods, corev1.PodTemplateSpec{
+		*pods = append(*pods, VirtualPod{
 			Spec: corev1.PodSpec{
 				InitContainers: initContainers,
 				Containers:     containers,
@@ -109,19 +113,20 @@ func collectWorkflowPodsImpl(spec workflowv1alpha1.WorkflowSpec, template workfl
 				Affinity:       affinity,
 				Tolerations:    tolerations,
 			},
+			SubName: name,
 		})
 	} else if template.Steps != nil {
 		for _, parallelStep := range template.Steps {
 			for _, step := range parallelStep.Steps {
 				if step.Inline != nil {
-					collectWorkflowPodsImpl(spec, *step.Inline, pods)
+					collectWorkflowPodsImpl(spec, *step.Inline, name, pods)
 				}
 			}
 		}
 	} else if template.DAG != nil {
 		for _, task := range template.DAG.Tasks {
 			if task.Inline != nil {
-				collectWorkflowPodsImpl(spec, *task.Inline, pods)
+				collectWorkflowPodsImpl(spec, *task.Inline, name, pods)
 			}
 		}
 	}

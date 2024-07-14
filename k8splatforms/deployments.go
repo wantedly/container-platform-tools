@@ -5,7 +5,6 @@ import (
 
 	"github.com/pkg/errors"
 	appsv1 "k8s.io/api/apps/v1"
-	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
@@ -38,10 +37,13 @@ func (p DeploymentProcessor) IsActive(obj client.Object) bool {
 }
 
 // VirtualPods implements KindProcessor.
-func (p DeploymentProcessor) VirtualPods(obj client.Object) []corev1.PodTemplateSpec {
+func (p DeploymentProcessor) VirtualPods(obj client.Object) []VirtualPod {
 	if deployment, ok := obj.(*appsv1.Deployment); ok {
-		return []corev1.PodTemplateSpec{
-			deployment.Spec.Template,
+		return []VirtualPod{
+			{
+				ObjectMeta: deployment.Spec.Template.ObjectMeta,
+				Spec:       deployment.Spec.Template.Spec,
+			},
 		}
 	}
 	return nil

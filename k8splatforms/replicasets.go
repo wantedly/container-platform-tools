@@ -5,7 +5,6 @@ import (
 
 	"github.com/pkg/errors"
 	appsv1 "k8s.io/api/apps/v1"
-	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
@@ -45,10 +44,13 @@ func replicaSetReplicas(rs *appsv1.ReplicaSet) int32 {
 }
 
 // VirtualPods implements KindProcessor.
-func (p ReplicaSetProcessor) VirtualPods(obj client.Object) []corev1.PodTemplateSpec {
+func (p ReplicaSetProcessor) VirtualPods(obj client.Object) []VirtualPod {
 	if rs, ok := obj.(*appsv1.ReplicaSet); ok {
-		return []corev1.PodTemplateSpec{
-			rs.Spec.Template,
+		return []VirtualPod{
+			{
+				ObjectMeta: rs.Spec.Template.ObjectMeta,
+				Spec:       rs.Spec.Template.Spec,
+			},
 		}
 	}
 	return nil

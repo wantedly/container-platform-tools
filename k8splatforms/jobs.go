@@ -5,7 +5,6 @@ import (
 
 	"github.com/pkg/errors"
 	batchv1 "k8s.io/api/batch/v1"
-	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
@@ -47,10 +46,13 @@ func hasJobFinished(job *batchv1.Job) bool {
 }
 
 // VirtualPods implements KindProcessor.
-func (p JobProcessor) VirtualPods(obj client.Object) []corev1.PodTemplateSpec {
+func (p JobProcessor) VirtualPods(obj client.Object) []VirtualPod {
 	if job, ok := obj.(*batchv1.Job); ok {
-		return []corev1.PodTemplateSpec{
-			job.Spec.Template,
+		return []VirtualPod{
+			{
+				ObjectMeta: job.Spec.Template.ObjectMeta,
+				Spec:       job.Spec.Template.Spec,
+			},
 		}
 	}
 	return nil
