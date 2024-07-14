@@ -3,144 +3,83 @@ package k8splatforms
 import (
 	"slices"
 
-	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 func SortObjects(
 	objs []client.Object,
 ) []client.Object {
-	graph := buildGraph(objs)
-	graph.sortObjects()
-	return graph.objects()
+	// Make it deterministic in the presence of cycles (which should not happen) or duplicates
+	slices.SortFunc(objs, objectCmp)
+	forest := makeForest(objs)
+	return flattenForest(forest)
 }
 
-type objectGraph struct {
-	ByName     map[string]client.Object
-	Names      []string
-	OwningRefs map[string][]string
-	OwnerRefs  map[string][]string
-}
-
-func buildGraph(objs []client.Object) objectGraph {
-	objByName := make(map[string]client.Object)
-	objNames := make([]string, 0, len(objs))
-	owningRefs := make(map[string][]string)
-	ownerRefs := make(map[string][]string)
+func objectsByKey(objs []client.Object) map[objectKey]client.Object {
+	objByKey := make(map[objectKey]client.Object)
 	for _, obj := range objs {
-		objKey := objectKey(obj)
-		objByName[objKey] = obj
-		objNames = append(objNames, objKey)
+		objByKey[getObjectKey(obj)] = obj
 	}
+	return objByKey
+}
+
+type objectForest struct {
+	Roots    []client.Object
+	Children map[client.Object][]client.Object
+}
+
+func makeForest(objs []client.Object) objectForest {
+	byKey := objectsByKey(objs)
+	forest := objectForest{
+		Roots:    make([]client.Object, 0, len(objs)),
+		Children: make(map[client.Object][]client.Object),
+	}
+	visited := make(map[client.Object]bool)
 	for _, obj := range objs {
-		objKey := objectKey(obj)
-		for _, ownerRef := range obj.GetOwnerReferences() {
-			ownerObj := unstructured.Unstructured{
-				Object: map[string]interface{}{
-					"apiVersion": ownerRef.APIVersion,
-					"kind":       ownerRef.Kind,
-					"metadata": map[string]interface{}{
-						"name":      ownerRef.Name,
-						"namespace": obj.GetNamespace(),
-					},
-				},
-			}
-			ownerKey := objectKey(&ownerObj)
-			if _, ok := objByName[ownerKey]; ok {
-				ownerRefs[objKey] = append(ownerRefs[objKey], ownerKey)
-				owningRefs[ownerKey] = append(owningRefs[ownerKey], objKey)
-			}
-		}
+		makeForestRecursion(obj, byKey, &forest, visited)
 	}
-	return objectGraph{
-		ByName:     objByName,
-		Names:      objNames,
-		OwningRefs: owningRefs,
-		OwnerRefs:  ownerRefs,
-	}
+	return forest
 }
 
-func (g *objectGraph) sortObjects() {
-	connectedComponents := g.connectedComponents()
-	for i, cc := range connectedComponents {
-		slices.SortFunc(cc, func(a, b string) int {
-			return objectCmp(g.ByName[a], g.ByName[b])
-		})
-		connectedComponents[i] = g.topologicalSort(cc)
+func makeForestRecursion(obj client.Object, byKey map[objectKey]client.Object, forest *objectForest, visited map[client.Object]bool) bool {
+	if visPost, ok := visited[obj]; ok {
+		return visPost
 	}
-	slices.SortFunc(connectedComponents, func(a, b []string) int {
-		// Every connected component is known to be non-empty and deterministically sorted
-		return objectCmp(g.ByName[a[0]], g.ByName[b[0]])
-	})
-	var newObjNames []string
-	for _, cc := range connectedComponents {
-		newObjNames = append(newObjNames, cc...)
+	visited[obj] = false
+	for _, ownerRef := range obj.GetOwnerReferences() {
+		ownerObj, ok := byKey[getOwnerRefKey(obj.GetNamespace(), ownerRef)]
+		if !ok {
+			continue
+		}
+		if makeForestRecursion(ownerObj, byKey, forest, visited) {
+			forest.Children[ownerObj] = append(forest.Children[ownerObj], obj)
+			visited[obj] = true
+			return true
+		}
 	}
-	g.Names = newObjNames
+	forest.Roots = append(forest.Roots, obj)
+	visited[obj] = true
+	return true
 }
 
-func (g *objectGraph) connectedComponents() [][]string {
-	var connectedComponents [][]string
-	inCC := make(map[string]struct{})
-	for _, objName := range g.Names {
-		if _, ok := inCC[objName]; ok {
-			continue
-		}
-		var cc []string
-		g.findCC(objName, &cc, inCC)
-		connectedComponents = append(connectedComponents, cc)
-	}
-	return connectedComponents
-}
-func (g *objectGraph) findCC(objName string, cc *[]string, inCC map[string]struct{}) {
-	inCC[objName] = struct{}{}
-	*cc = append(*cc, objName)
-	for _, ownerRef := range g.OwningRefs[objName] {
-		if _, ok := inCC[ownerRef]; ok {
-			continue
-		}
-		g.findCC(ownerRef, cc, inCC)
-	}
-	for _, ownerRef := range g.OwnerRefs[objName] {
-		if _, ok := inCC[ownerRef]; ok {
-			continue
-		}
-		g.findCC(ownerRef, cc, inCC)
-	}
-}
-
-func (g *objectGraph) topologicalSort(objNames []string) []string {
-	newObjNames := make([]string, 0, len(objNames))
-	visited := make(map[string]struct{})
-	for _, objName := range objNames {
-		if _, ok := visited[objName]; ok {
-			continue
-		}
-		g.topologicalSortVisit(objName, &newObjNames, visited)
-	}
-	return newObjNames
-}
-func (g *objectGraph) topologicalSortVisit(objName string, newObjNames *[]string, visited map[string]struct{}) {
-	visited[objName] = struct{}{}
-	ownerNames := slices.Clone(g.OwnerRefs[objName])
-	slices.SortFunc(ownerNames, func(a, b string) int {
-		return objectCmp(g.ByName[a], g.ByName[b])
-	})
-	for _, ownerName := range ownerNames {
-		if _, ok := visited[ownerName]; ok {
-			continue
-		}
-		g.topologicalSortVisit(ownerName, newObjNames, visited)
-	}
-	*newObjNames = append(*newObjNames, objName)
-}
-
-func (g *objectGraph) objects() []client.Object {
-	objs := make([]client.Object, 0, len(g.Names))
-	for _, objName := range g.Names {
-		objs = append(objs, g.ByName[objName])
+func flattenForest(forest objectForest) []client.Object {
+	var objs []client.Object
+	slices.SortFunc(forest.Roots, objectCmp)
+	for _, root := range forest.Roots {
+		objs = append(objs, root)
+		flattenForestRecursion(root, forest, &objs)
 	}
 	return objs
+}
+
+func flattenForestRecursion(obj client.Object, forest objectForest, objs *[]client.Object) {
+	children := forest.Children[obj]
+	slices.SortFunc(children, objectCmp)
+	for _, child := range children {
+		*objs = append(*objs, child)
+		flattenForestRecursion(child, forest, objs)
+	}
 }
 
 func objectCmp(a, b client.Object) int {
@@ -173,7 +112,27 @@ func objectCmp(a, b client.Object) int {
 	return 0
 }
 
-func objectKey(obj client.Object) string {
-	gvk := obj.GetObjectKind().GroupVersionKind()
-	return obj.GetNamespace() + ":" + gvk.GroupVersion().String() + "." + gvk.Kind + "/" + obj.GetName()
+type objectKey struct {
+	Namespace  string
+	APIVersion string
+	Kind       string
+	Name       string
+}
+
+func getObjectKey(obj client.Object) objectKey {
+	return objectKey{
+		Namespace:  obj.GetNamespace(),
+		APIVersion: obj.GetObjectKind().GroupVersionKind().GroupVersion().String(),
+		Kind:       obj.GetObjectKind().GroupVersionKind().Kind,
+		Name:       obj.GetName(),
+	}
+}
+
+func getOwnerRefKey(ns string, ownerRef metav1.OwnerReference) objectKey {
+	return objectKey{
+		Namespace:  ns,
+		APIVersion: ownerRef.APIVersion,
+		Kind:       ownerRef.Kind,
+		Name:       ownerRef.Name,
+	}
 }
