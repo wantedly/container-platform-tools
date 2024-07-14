@@ -29,8 +29,8 @@ func (p DeploymentProcessor) Retrieve(ctx context.Context, config *rest.Config, 
 	return objs, nil
 }
 
-// IsRelevant implements KindProcessor.
-func (p DeploymentProcessor) IsRelevant(obj client.Object) bool {
+// IsActive implements KindProcessor.
+func (p DeploymentProcessor) IsActive(obj client.Object) bool {
 	if _, ok := obj.(*appsv1.Deployment); ok {
 		return true
 	}

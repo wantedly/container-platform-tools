@@ -11,6 +11,6 @@ import (
 
 type KindProcessor interface {
 	Retrieve(ctx context.Context, config *rest.Config, clientset *kubernetes.Clientset) ([]client.Object, error)
-	IsRelevant(obj client.Object) bool
+	IsActive(obj client.Object) bool
 	VirtualPods(obj client.Object) []corev1.PodTemplateSpec
 }

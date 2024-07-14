@@ -29,8 +29,8 @@ func (p JobProcessor) Retrieve(ctx context.Context, config *rest.Config, clients
 	return objs, nil
 }
 
-// IsRelevant implements KindProcessor.
-func (p JobProcessor) IsRelevant(obj client.Object) bool {
+// IsActive implements KindProcessor.
+func (p JobProcessor) IsActive(obj client.Object) bool {
 	if job, ok := obj.(*batchv1.Job); ok {
 		return !hasJobFinished(job)
 	}

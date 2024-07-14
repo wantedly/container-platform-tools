@@ -34,8 +34,8 @@ func (w WorkflowProcessor) Retrieve(ctx context.Context, config *rest.Config, _c
 	return objs, nil
 }
 
-// IsRelevant implements KindProcessor.
-func (w WorkflowProcessor) IsRelevant(obj client.Object) bool {
+// IsActive implements KindProcessor.
+func (w WorkflowProcessor) IsActive(obj client.Object) bool {
 	if _, ok := obj.(*workflowv1alpha1.Workflow); ok {
 		return true
 	}

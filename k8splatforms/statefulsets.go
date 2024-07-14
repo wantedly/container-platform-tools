@@ -29,8 +29,8 @@ func (p StatefulSetProcessor) Retrieve(ctx context.Context, config *rest.Config,
 	return objs, nil
 }
 
-// IsRelevant implements KindProcessor.
-func (p StatefulSetProcessor) IsRelevant(obj client.Object) bool {
+// IsActive implements KindProcessor.
+func (p StatefulSetProcessor) IsActive(obj client.Object) bool {
 	if _, ok := obj.(*appsv1.StatefulSet); ok {
 		return true
 	}

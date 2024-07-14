@@ -29,8 +29,8 @@ func (c CronJobProcessor) Retrieve(ctx context.Context, config *rest.Config, cli
 	return objs, nil
 }
 
-// IsRelevant implements KindProcessor.
-func (c CronJobProcessor) IsRelevant(obj client.Object) bool {
+// IsActive implements KindProcessor.
+func (c CronJobProcessor) IsActive(obj client.Object) bool {
 	if _, ok := obj.(*batchv1.CronJob); ok {
 		return true
 	}

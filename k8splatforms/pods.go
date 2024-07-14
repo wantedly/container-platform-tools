@@ -28,8 +28,8 @@ func (p PodProcessor) Retrieve(ctx context.Context, config *rest.Config, clients
 	return objs, nil
 }
 
-// IsRelevant implements KindProcessor.
-func (p PodProcessor) IsRelevant(obj client.Object) bool {
+// IsActive implements KindProcessor.
+func (p PodProcessor) IsActive(obj client.Object) bool {
 	if pod, ok := obj.(*corev1.Pod); ok {
 		return !podFinishedOrDeleted(pod)
 	}

@@ -34,8 +34,8 @@ func (c CronWorkflowProcessor) Retrieve(ctx context.Context, config *rest.Config
 	return objs, nil
 }
 
-// IsRelevant implements KindProcessor.
-func (c CronWorkflowProcessor) IsRelevant(obj client.Object) bool {
+// IsActive implements KindProcessor.
+func (c CronWorkflowProcessor) IsActive(obj client.Object) bool {
 	if _, ok := obj.(*workflowv1alpha1.CronWorkflow); ok {
 		return true
 	}

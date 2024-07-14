@@ -29,8 +29,8 @@ func (p DaemonSetProcessor) Retrieve(ctx context.Context, config *rest.Config, c
 	return objs, nil
 }
 
-// IsRelevant implements KindProcessor.
-func (p DaemonSetProcessor) IsRelevant(obj client.Object) bool {
+// IsActive implements KindProcessor.
+func (p DaemonSetProcessor) IsActive(obj client.Object) bool {
 	if _, ok := obj.(*appsv1.DaemonSet); ok {
 		return true
 	}

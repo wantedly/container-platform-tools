@@ -29,8 +29,8 @@ func (p ReplicaSetProcessor) Retrieve(ctx context.Context, config *rest.Config, 
 	return objs, nil
 }
 
-// IsRelevant implements KindProcessor.
-func (p ReplicaSetProcessor) IsRelevant(obj client.Object) bool {
+// IsActive implements KindProcessor.
+func (p ReplicaSetProcessor) IsActive(obj client.Object) bool {
 	if rs, ok := obj.(*appsv1.ReplicaSet); ok {
 		return replicaSetReplicas(rs) > 0
 	}
