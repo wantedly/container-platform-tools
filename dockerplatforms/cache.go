@@ -65,7 +65,7 @@ type YAMLCache struct {
 	newData map[string]imageData
 }
 
-func (c *YAMLCache) open(ctx context.Context) error {
+func (c *YAMLCache) open(_ context.Context) error {
 	f, err := os.OpenFile(c.path, os.O_RDONLY|os.O_CREATE, 0o666)
 	if err != nil {
 		return errors.Wrap(err, "opening cache file for reading")
