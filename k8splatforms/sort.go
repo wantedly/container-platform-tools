@@ -62,12 +62,18 @@ func buildGraph(objs []client.Object) objectGraph {
 
 func (g *objectGraph) sortObjects() {
 	connectedComponents := g.connectedComponents()
-	var newObjNames []string
-	for _, cc := range connectedComponents {
+	for i, cc := range connectedComponents {
 		slices.SortFunc(cc, func(a, b string) int {
 			return objectCmp(g.ByName[a], g.ByName[b])
 		})
-		cc = g.topologicalSort(cc)
+		connectedComponents[i] = g.topologicalSort(cc)
+	}
+	slices.SortFunc(connectedComponents, func(a, b []string) int {
+		// Every connected component is known to be non-empty and deterministically sorted
+		return objectCmp(g.ByName[a[0]], g.ByName[b[0]])
+	})
+	var newObjNames []string
+	for _, cc := range connectedComponents {
 		newObjNames = append(newObjNames, cc...)
 	}
 	g.Names = newObjNames
