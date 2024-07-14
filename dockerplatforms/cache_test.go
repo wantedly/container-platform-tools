@@ -1,6 +1,7 @@
 package dockerplatforms_test
 
 import (
+	"context"
 	"os"
 	"testing"
 
@@ -10,9 +11,10 @@ import (
 )
 
 func TestNopGetEmpty(t *testing.T) {
+	ctx := context.Background()
 	cache := dockerplatforms.NewNopCache()
 
-	platforms, ok, err := cache.GetCachedPlatforms("docker.io/library/golang:latest")
+	platforms, ok, err := cache.GetCachedPlatforms(ctx, "docker.io/library/golang:latest")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -25,14 +27,15 @@ func TestNopGetEmpty(t *testing.T) {
 }
 
 func TestNopSet(t *testing.T) {
+	ctx := context.Background()
 	cache := dockerplatforms.NewNopCache()
 
-	err := cache.SetCachedPlatforms("docker.io/library/golang:latest", []dockerplatforms.DockerPlatform{})
+	err := cache.SetCachedPlatforms(ctx, "docker.io/library/golang:latest", []dockerplatforms.DockerPlatform{})
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	platforms, ok, err := cache.GetCachedPlatforms("docker.io/library/golang:latest")
+	platforms, ok, err := cache.GetCachedPlatforms(ctx, "docker.io/library/golang:latest")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -45,11 +48,12 @@ func TestNopSet(t *testing.T) {
 }
 
 func TestNopSetError(t *testing.T) {
+	ctx := context.Background()
 	cache := dockerplatforms.NewNopCache()
 
-	cache.SetErrorCache("docker.io/library/golang:latest", errors.New("failed to retrieve"))
+	cache.SetErrorCache(ctx, "docker.io/library/golang:latest", errors.New("failed to retrieve"))
 
-	platforms, ok, err := cache.GetCachedPlatforms("docker.io/library/golang:latest")
+	platforms, ok, err := cache.GetCachedPlatforms(ctx, "docker.io/library/golang:latest")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -62,14 +66,15 @@ func TestNopSetError(t *testing.T) {
 }
 
 func TestNopClear(t *testing.T) {
+	ctx := context.Background()
 	cache := dockerplatforms.NewNopCache()
 
-	err := cache.ClearCachedPlatforms("docker.io/library/golang:latest")
+	err := cache.ClearCachedPlatforms(ctx, "docker.io/library/golang:latest")
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	platforms, ok, err := cache.GetCachedPlatforms("docker.io/library/golang:latest")
+	platforms, ok, err := cache.GetCachedPlatforms(ctx, "docker.io/library/golang:latest")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -82,13 +87,14 @@ func TestNopClear(t *testing.T) {
 }
 
 func TestYAMLGetEmpty(t *testing.T) {
-	env, cache, err := setupEmptyYAML("TestYAMLGetEmpty")
+	ctx := context.Background()
+	env, cache, err := setupEmptyYAML(ctx, "TestYAMLGetEmpty")
 	if err != nil {
 		t.Fatal(err)
 	}
 	defer env.Close()
 
-	platforms, ok, err := cache.GetCachedPlatforms("docker.io/library/golang:latest")
+	platforms, ok, err := cache.GetCachedPlatforms(ctx, "docker.io/library/golang:latest")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -101,7 +107,8 @@ func TestYAMLGetEmpty(t *testing.T) {
 }
 
 func TestYAMLEmptyWrite(t *testing.T) {
-	env, _, err := setupEmptyYAML("TestYAMLEmptyWrite")
+	ctx := context.Background()
+	env, _, err := setupEmptyYAML(ctx, "TestYAMLEmptyWrite")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -117,13 +124,14 @@ func TestYAMLEmptyWrite(t *testing.T) {
 }
 
 func TestYAMLSetGet(t *testing.T) {
-	env, cache, err := setupEmptyYAML("TestYAMLSetGet")
+	ctx := context.Background()
+	env, cache, err := setupEmptyYAML(ctx, "TestYAMLSetGet")
 	if err != nil {
 		t.Fatal(err)
 	}
 	defer env.Close()
 
-	err = cache.SetCachedPlatforms("docker.io/library/golang:latest", []dockerplatforms.DockerPlatform{
+	err = cache.SetCachedPlatforms(ctx, "docker.io/library/golang:latest", []dockerplatforms.DockerPlatform{
 		dockerplatforms.Linux386,
 		dockerplatforms.LinuxAMD64,
 		dockerplatforms.LinuxARM64,
@@ -137,7 +145,7 @@ func TestYAMLSetGet(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	platforms, ok, err := cache.GetCachedPlatforms("docker.io/library/golang:latest")
+	platforms, ok, err := cache.GetCachedPlatforms(ctx, "docker.io/library/golang:latest")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -159,13 +167,14 @@ func TestYAMLSetGet(t *testing.T) {
 }
 
 func TestYAMLSetWrite(t *testing.T) {
-	env, cache, err := setupEmptyYAML("TestYAMLSetWrite")
+	ctx := context.Background()
+	env, cache, err := setupEmptyYAML(ctx, "TestYAMLSetWrite")
 	if err != nil {
 		t.Fatal(err)
 	}
 	defer env.Close()
 
-	err = cache.SetCachedPlatforms("docker.io/library/golang:latest", []dockerplatforms.DockerPlatform{
+	err = cache.SetCachedPlatforms(ctx, "docker.io/library/golang:latest", []dockerplatforms.DockerPlatform{
 		dockerplatforms.Linux386,
 		dockerplatforms.LinuxAMD64,
 		dockerplatforms.LinuxARM64,
@@ -179,7 +188,7 @@ func TestYAMLSetWrite(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	err = cache.WriteBack()
+	err = cache.WriteBack(ctx)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -196,7 +205,8 @@ func TestYAMLSetWrite(t *testing.T) {
 }
 
 func TestYAMLReadGet(t *testing.T) {
-	env, cache, err := setupYAML("TestYAMLReadGet", `docker.io/library/golang:latest:
+	ctx := context.Background()
+	env, cache, err := setupYAML(ctx, "TestYAMLReadGet", `docker.io/library/golang:latest:
     platforms: linux/386, linux/amd64, linux/arm64, linux/arm/v7, linux/mips64le, linux/ppc64le, linux/s390x, windows/amd64
 `)
 	if err != nil {
@@ -204,7 +214,7 @@ func TestYAMLReadGet(t *testing.T) {
 	}
 	defer env.Close()
 
-	platforms, ok, err := cache.GetCachedPlatforms("docker.io/library/golang:latest")
+	platforms, ok, err := cache.GetCachedPlatforms(ctx, "docker.io/library/golang:latest")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -226,15 +236,16 @@ func TestYAMLReadGet(t *testing.T) {
 }
 
 func TestYAMLSetErrorWrite(t *testing.T) {
-	env, cache, err := setupEmptyYAML("TestYAMLSetErrorWrite")
+	ctx := context.Background()
+	env, cache, err := setupEmptyYAML(ctx, "TestYAMLSetErrorWrite")
 	if err != nil {
 		t.Fatal(err)
 	}
 	defer env.Close()
 
-	cache.SetErrorCache("docker.io/library/golang:latest", errors.New("failed to retrieve"))
+	cache.SetErrorCache(ctx, "docker.io/library/golang:latest", errors.New("failed to retrieve"))
 
-	err = cache.WriteBack()
+	err = cache.WriteBack(ctx)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -252,7 +263,8 @@ func TestYAMLSetErrorWrite(t *testing.T) {
 }
 
 func TestYAMLReadErrorGet(t *testing.T) {
-	env, cache, err := setupYAML("TestYAMLReadErrorGet", `docker.io/library/golang:latest:
+	ctx := context.Background()
+	env, cache, err := setupYAML(ctx, "TestYAMLReadErrorGet", `docker.io/library/golang:latest:
     platforms: ""
     error: failed to retrieve
 `)
@@ -261,7 +273,7 @@ func TestYAMLReadErrorGet(t *testing.T) {
 	}
 	defer env.Close()
 
-	_, _, err = cache.GetCachedPlatforms("docker.io/library/golang:latest")
+	_, _, err = cache.GetCachedPlatforms(ctx, "docker.io/library/golang:latest")
 	if err == nil {
 		t.Fatal("Missing error")
 	}
@@ -279,14 +291,14 @@ func (e *yamlEnv) Close() error {
 	return os.RemoveAll(e.tmpdir)
 }
 
-func setupEmptyYAML(name string) (*yamlEnv, *dockerplatforms.YAMLCache, error) {
-	return setupYAMLImpl(name, false, "")
+func setupEmptyYAML(ctx context.Context, name string) (*yamlEnv, *dockerplatforms.YAMLCache, error) {
+	return setupYAMLImpl(ctx, name, false, "")
 }
 
-func setupYAML(name string, content string) (*yamlEnv, *dockerplatforms.YAMLCache, error) {
-	return setupYAMLImpl(name, true, content)
+func setupYAML(ctx context.Context, name string, content string) (*yamlEnv, *dockerplatforms.YAMLCache, error) {
+	return setupYAMLImpl(ctx, name, true, content)
 }
-func setupYAMLImpl(name string, hasContent bool, content string) (*yamlEnv, *dockerplatforms.YAMLCache, error) {
+func setupYAMLImpl(ctx context.Context, name string, hasContent bool, content string) (*yamlEnv, *dockerplatforms.YAMLCache, error) {
 	tmpdir, err := os.MkdirTemp("", name)
 	if err != nil {
 		return nil, nil, err
@@ -301,7 +313,7 @@ func setupYAMLImpl(name string, hasContent bool, content string) (*yamlEnv, *doc
 		}
 	}
 
-	initCache, err := dockerplatforms.NewYAMLCache(path)
+	initCache, err := dockerplatforms.NewYAMLCache(ctx, path)
 	if err != nil {
 		os.RemoveAll(tmpdir)
 		return nil, nil, err

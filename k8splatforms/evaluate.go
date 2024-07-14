@@ -1,6 +1,7 @@
 package k8splatforms
 
 import (
+	"context"
 	"time"
 
 	"github.com/pkg/errors"
@@ -26,6 +27,7 @@ type Row struct {
 }
 
 func EvaluateObjects(
+	ctx context.Context,
 	objs []client.Object,
 	nodes []corev1.Node,
 	metricses []metricsv1beta1.PodMetrics,
@@ -54,7 +56,7 @@ func EvaluateObjects(
 			}
 		}
 		for _, virtualPod := range virtualPods {
-			row, err := evaluateVirtualPod(obj, nodesByName, metricsesByName, nodePlatforms, platformInspector, virtualPod)
+			row, err := evaluateVirtualPod(ctx, obj, nodesByName, metricsesByName, nodePlatforms, platformInspector, virtualPod)
 			if err != nil {
 				return nil, errors.Wrap(err, "evaluating pod platforms")
 			}
@@ -65,6 +67,7 @@ func EvaluateObjects(
 }
 
 func evaluateVirtualPod(
+	ctx context.Context,
 	obj client.Object,
 	nodesByName map[string]*corev1.Node,
 	metricsesByName map[string]*metricsv1beta1.PodMetrics,
@@ -101,7 +104,7 @@ func evaluateVirtualPod(
 	var imagePlatforms dockerplatforms.DockerPlatformList
 	found := false
 	for _, container := range virtualPod.Spec.Containers {
-		platforms, err := platformInspector.GetPlatforms(container.Image)
+		platforms, err := platformInspector.GetPlatforms(ctx, container.Image)
 		if err != nil {
 			return Row{}, errors.Wrap(err, "inspecting image platforms")
 		}

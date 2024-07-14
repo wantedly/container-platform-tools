@@ -1,6 +1,8 @@
 package dockerplatforms
 
 import (
+	"context"
+
 	"github.com/containers/image/v5/docker/reference"
 	"github.com/pkg/errors"
 )
@@ -19,7 +21,7 @@ func New(retriever ManifestRetriever, cache Cache) *PlatformInspector {
 }
 
 // GetPlatforms returns the list of supported platforms of the given image.
-func (p *PlatformInspector) GetPlatforms(image string) ([]DockerPlatform, error) {
+func (p *PlatformInspector) GetPlatforms(ctx context.Context, image string) ([]DockerPlatform, error) {
 	imageRef, err := reference.ParseNormalizedNamed(image)
 	if err != nil {
 		return nil, errors.Wrap(err, "parsing image reference")
@@ -39,7 +41,7 @@ func (p *PlatformInspector) GetPlatforms(image string) ([]DockerPlatform, error)
 
 	image = imageRef.String()
 
-	cached, ok, err := p.cache.GetCachedPlatforms(image)
+	cached, ok, err := p.cache.GetCachedPlatforms(ctx, image)
 	if err != nil {
 		return nil, errors.Wrap(err, "looking for cached data")
 	}
@@ -47,12 +49,12 @@ func (p *PlatformInspector) GetPlatforms(image string) ([]DockerPlatform, error)
 		return cached, nil
 	}
 
-	platforms, err := AnalyzeManifest(imageRef, p.retriever)
+	platforms, err := AnalyzeManifest(ctx, imageRef, p.retriever)
 	if err != nil {
-		p.cache.SetErrorCache(image, err)
+		p.cache.SetErrorCache(ctx, image, err)
 		return nil, err
 	}
-	err = p.cache.SetCachedPlatforms(image, platforms)
+	err = p.cache.SetCachedPlatforms(ctx, image, platforms)
 	if err != nil {
 		return nil, errors.Wrap(err, "caching platforms")
 	}

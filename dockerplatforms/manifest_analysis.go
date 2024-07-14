@@ -1,14 +1,16 @@
 package dockerplatforms
 
 import (
+	"context"
+
 	"github.com/containers/image/v5/docker/reference"
 	"github.com/containers/image/v5/manifest"
 	"github.com/containers/image/v5/types"
 	"github.com/pkg/errors"
 )
 
-func AnalyzeManifest(imageRef reference.Named, retriever ManifestRetriever) ([]DockerPlatform, error) {
-	manifestText, mediaType, err := retriever.GetManifest(imageRef.String())
+func AnalyzeManifest(ctx context.Context, imageRef reference.Named, retriever ManifestRetriever) ([]DockerPlatform, error) {
+	manifestText, mediaType, err := retriever.GetManifest(ctx, imageRef.String())
 	if err != nil {
 		return nil, errors.Wrap(err, "retrieving manifest")
 	}
@@ -55,7 +57,7 @@ func AnalyzeManifest(imageRef reference.Named, retriever ManifestRetriever) ([]D
 				return nil, errors.Wrap(err, "getting config reference")
 			}
 
-			configText, _, err := retriever.GetManifest(configReference.String())
+			configText, _, err := retriever.GetManifest(ctx, configReference.String())
 			if err != nil {
 				return nil, errors.Wrap(err, "retrieving config")
 			}

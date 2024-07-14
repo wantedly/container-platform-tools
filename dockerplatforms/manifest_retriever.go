@@ -2,6 +2,7 @@
 package dockerplatforms
 
 import (
+	"context"
 	"os/exec"
 
 	"github.com/pkg/errors"
@@ -9,7 +10,7 @@ import (
 
 // ManifestRetriever is an interface to retrieve the manifest of an image.
 type ManifestRetriever interface {
-	GetManifest(image string) ([]byte, string, error)
+	GetManifest(ctx context.Context, image string) ([]byte, string, error)
 }
 
 // ImageTools is a ManifestRetriever backend using `docker buildx imagetools`.
@@ -23,9 +24,9 @@ func NewImageTools() *ImageTools {
 	return &ImageTools{dockerExecPath: "docker"}
 }
 
-func (i *ImageTools) GetManifest(image string) ([]byte, string, error) {
+func (i *ImageTools) GetManifest(ctx context.Context, image string) ([]byte, string, error) {
 	// Invoke docker buildx imagetools inspect --raw <image>
-	cmd := exec.Command(i.dockerExecPath, "buildx", "imagetools", "inspect", "--raw", image)
+	cmd := exec.CommandContext(ctx, i.dockerExecPath, "buildx", "imagetools", "inspect", "--raw", image)
 	if cmd.Err != nil {
 		return nil, "", errors.Wrap(cmd.Err, "creating command")
 	}

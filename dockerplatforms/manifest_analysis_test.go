@@ -1,6 +1,7 @@
 package dockerplatforms_test
 
 import (
+	"context"
 	"os"
 	"testing"
 
@@ -12,15 +13,16 @@ import (
 )
 
 func TestAnalyzeManifestIndex(t *testing.T) {
+	ctx := context.Background()
 	ctrl := gomock.NewController(t)
 	retriever := dockerplatformstesting.NewMockManifestRetriever(ctrl)
-	retriever.EXPECT().GetManifest("docker.io/library/golang:latest").Return(mustReadFixture(t, "golang-latest.json"), "", nil)
+	retriever.EXPECT().GetManifest(gomock.Any(), "docker.io/library/golang:latest").Return(mustReadFixture(t, "golang-latest.json"), "", nil)
 	imageRef, err := reference.ParseNormalizedNamed("golang:latest")
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	platforms, err := dockerplatforms.AnalyzeManifest(imageRef, retriever)
+	platforms, err := dockerplatforms.AnalyzeManifest(ctx, imageRef, retriever)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -41,16 +43,17 @@ func TestAnalyzeManifestIndex(t *testing.T) {
 }
 
 func TestAnalyzeManifestV2(t *testing.T) {
+	ctx := context.Background()
 	ctrl := gomock.NewController(t)
 	retriever := dockerplatformstesting.NewMockManifestRetriever(ctrl)
-	retriever.EXPECT().GetManifest("docker.io/library/golang:1.5").Return(mustReadFixture(t, "golang-1.5.json"), "", nil)
-	retriever.EXPECT().GetManifest("docker.io/library/golang@sha256:99668503de157252ba311f570f036490602095f2620c46cb407d3d2dd88aeb6e").Return(mustReadFixture(t, "golang-1.5-99668503de157252ba311f570f036490602095f2620c46cb407d3d2dd88aeb6e.json"), "", nil)
+	retriever.EXPECT().GetManifest(gomock.Any(), "docker.io/library/golang:1.5").Return(mustReadFixture(t, "golang-1.5.json"), "", nil)
+	retriever.EXPECT().GetManifest(gomock.Any(), "docker.io/library/golang@sha256:99668503de157252ba311f570f036490602095f2620c46cb407d3d2dd88aeb6e").Return(mustReadFixture(t, "golang-1.5-99668503de157252ba311f570f036490602095f2620c46cb407d3d2dd88aeb6e.json"), "", nil)
 	imageRef, err := reference.ParseNormalizedNamed("golang:1.5")
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	platforms, err := dockerplatforms.AnalyzeManifest(imageRef, retriever)
+	platforms, err := dockerplatforms.AnalyzeManifest(ctx, imageRef, retriever)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -63,15 +66,16 @@ func TestAnalyzeManifestV2(t *testing.T) {
 }
 
 func TestAnalyzeManifestV1(t *testing.T) {
+	ctx := context.Background()
 	ctrl := gomock.NewController(t)
 	retriever := dockerplatformstesting.NewMockManifestRetriever(ctrl)
-	retriever.EXPECT().GetManifest("docker.io/library/golang:1.3").Return(mustReadFixture(t, "golang-1.3.json"), "", nil)
+	retriever.EXPECT().GetManifest(ctx, "docker.io/library/golang:1.3").Return(mustReadFixture(t, "golang-1.3.json"), "", nil)
 	imageRef, err := reference.ParseNormalizedNamed("golang:1.3")
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	platforms, err := dockerplatforms.AnalyzeManifest(imageRef, retriever)
+	platforms, err := dockerplatforms.AnalyzeManifest(ctx, imageRef, retriever)
 	if err != nil {
 		t.Fatal(err)
 	}

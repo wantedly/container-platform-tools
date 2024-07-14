@@ -10,6 +10,7 @@
 package dockerplatformstesting
 
 import (
+	context "context"
 	reflect "reflect"
 
 	gomock "go.uber.org/mock/gomock"
@@ -39,9 +40,9 @@ func (m *MockManifestRetriever) EXPECT() *MockManifestRetrieverMockRecorder {
 }
 
 // GetManifest mocks base method.
-func (m *MockManifestRetriever) GetManifest(image string) ([]byte, string, error) {
+func (m *MockManifestRetriever) GetManifest(ctx context.Context, image string) ([]byte, string, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetManifest", image)
+	ret := m.ctrl.Call(m, "GetManifest", ctx, image)
 	ret0, _ := ret[0].([]byte)
 	ret1, _ := ret[1].(string)
 	ret2, _ := ret[2].(error)
@@ -49,7 +50,7 @@ func (m *MockManifestRetriever) GetManifest(image string) ([]byte, string, error
 }
 
 // GetManifest indicates an expected call of GetManifest.
-func (mr *MockManifestRetrieverMockRecorder) GetManifest(image any) *gomock.Call {
+func (mr *MockManifestRetrieverMockRecorder) GetManifest(ctx, image any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetManifest", reflect.TypeOf((*MockManifestRetriever)(nil).GetManifest), image)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetManifest", reflect.TypeOf((*MockManifestRetriever)(nil).GetManifest), ctx, image)
 }

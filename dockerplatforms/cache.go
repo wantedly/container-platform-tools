@@ -1,6 +1,7 @@
 package dockerplatforms
 
 import (
+	"context"
 	"io"
 	"os"
 	"syscall"
@@ -11,13 +12,13 @@ import (
 
 type Cache interface {
 	// GetCachedPlatforms returns the precomputed list of platforms, if there is any.
-	GetCachedPlatforms(image string) ([]DockerPlatform, bool, error)
+	GetCachedPlatforms(ctx context.Context, image string) ([]DockerPlatform, bool, error)
 	// SetCachedPlatforms stores the list of platforms for future use.
-	SetCachedPlatforms(image string, platforms []DockerPlatform) error
+	SetCachedPlatforms(ctx context.Context, image string, platforms []DockerPlatform) error
 	// SetErrorCache stores an error message for the image.
-	SetErrorCache(image string, err error)
+	SetErrorCache(ctx context.Context, image string, err error)
 	// ClearCachedPlatforms removes the list of platforms from the cache.
-	ClearCachedPlatforms(image string) error
+	ClearCachedPlatforms(ctx context.Context, image string) error
 }
 
 // NewNopCache creates a Cache that does nothing.
@@ -27,29 +28,29 @@ func NewNopCache() Cache {
 
 type nopCache struct{}
 
-func (c *nopCache) GetCachedPlatforms(image string) ([]DockerPlatform, bool, error) {
+func (c *nopCache) GetCachedPlatforms(ctx context.Context, image string) ([]DockerPlatform, bool, error) {
 	return nil, false, nil
 }
 
-func (c *nopCache) SetCachedPlatforms(image string, platforms []DockerPlatform) error {
+func (c *nopCache) SetCachedPlatforms(ctx context.Context, image string, platforms []DockerPlatform) error {
 	return nil
 }
 
-func (c *nopCache) ClearCachedPlatforms(image string) error {
+func (c *nopCache) ClearCachedPlatforms(ctx context.Context, image string) error {
 	return nil
 }
 
-func (c *nopCache) SetErrorCache(image string, err error) {
+func (c *nopCache) SetErrorCache(ctx context.Context, image string, err error) {
 }
 
 // NewYAMLCache creates a Cache that reads and writes a YAML file.
-func NewYAMLCache(path string) (*YAMLCache, error) {
+func NewYAMLCache(ctx context.Context, path string) (*YAMLCache, error) {
 	cache := YAMLCache{
 		path:    path,
 		oldData: make(map[string]imageData),
 		newData: make(map[string]imageData),
 	}
-	err := cache.open()
+	err := cache.open(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -64,7 +65,7 @@ type YAMLCache struct {
 	newData map[string]imageData
 }
 
-func (c *YAMLCache) open() error {
+func (c *YAMLCache) open(ctx context.Context) error {
 	f, err := os.OpenFile(c.path, os.O_RDONLY|os.O_CREATE, 0o666)
 	if err != nil {
 		return errors.Wrap(err, "opening cache file for reading")
@@ -88,7 +89,7 @@ func (c *YAMLCache) open() error {
 
 	return nil
 }
-func (c *YAMLCache) WriteBack() error {
+func (c *YAMLCache) WriteBack(ctx context.Context) error {
 	if len(c.newData) == 0 {
 		return nil
 	}
@@ -140,7 +141,7 @@ func (c *YAMLCache) WriteBack() error {
 	return nil
 }
 
-func (c *YAMLCache) GetCachedPlatforms(image string) ([]DockerPlatform, bool, error) {
+func (c *YAMLCache) GetCachedPlatforms(ctx context.Context, image string) ([]DockerPlatform, bool, error) {
 	imageData, ok := c.newData[image]
 	if !ok {
 		imageData, ok = c.oldData[image]
@@ -156,7 +157,7 @@ func (c *YAMLCache) GetCachedPlatforms(image string) ([]DockerPlatform, bool, er
 	return imageData.Platforms, true, nil
 }
 
-func (c *YAMLCache) SetCachedPlatforms(image string, platforms []DockerPlatform) error {
+func (c *YAMLCache) SetCachedPlatforms(ctx context.Context, image string, platforms []DockerPlatform) error {
 	c.newData[image] = imageData{
 		Platforms: platforms,
 	}
@@ -164,13 +165,13 @@ func (c *YAMLCache) SetCachedPlatforms(image string, platforms []DockerPlatform)
 }
 
 // ClearCachedPlatforms implements Cache.
-func (c *YAMLCache) ClearCachedPlatforms(image string) error {
+func (c *YAMLCache) ClearCachedPlatforms(ctx context.Context, image string) error {
 	delete(c.newData, image)
 	return nil
 }
 
 // SetErrorCache implements Cache.
-func (c *YAMLCache) SetErrorCache(image string, err error) {
+func (c *YAMLCache) SetErrorCache(ctx context.Context, image string, err error) {
 	c.newData[image] = imageData{
 		Error: err.Error(),
 	}
