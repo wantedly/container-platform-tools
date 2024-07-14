@@ -2,6 +2,7 @@ package dockerplatforms
 
 import (
 	"encoding/json"
+	"slices"
 	"strings"
 
 	"gopkg.in/yaml.v3"
@@ -76,4 +77,55 @@ func (p *DockerPlatformList) UnmarshalYAML(value *yaml.Node) error {
 	}
 	*p = parsed
 	return nil
+}
+
+func (p DockerPlatformList) Normalized() DockerPlatformList {
+	normalized := make(DockerPlatformList, 0, len(p))
+	seen := make(map[DockerPlatform]struct{})
+	for _, platform := range p {
+		if _, ok := seen[platform]; ok {
+			continue
+		}
+		seen[platform] = struct{}{}
+		normalized = append(normalized, platform)
+	}
+	slices.SortFunc(normalized, func(a, b DockerPlatform) int {
+		return a.Cmp(b)
+	})
+	return normalized
+}
+
+func (p DockerPlatformList) Variantless() DockerPlatformList {
+	variantless := make(DockerPlatformList, len(p))
+	for i, platform := range p {
+		variantless[i] = platform.Variantless()
+	}
+	return variantless.Normalized()
+}
+
+func (p DockerPlatformList) Includes(other DockerPlatformList) bool {
+	pMap := make(map[DockerPlatform]struct{})
+	for _, platform := range p {
+		pMap[platform] = struct{}{}
+	}
+	for _, platform := range other {
+		if _, ok := pMap[platform]; !ok {
+			return false
+		}
+	}
+	return true
+}
+
+func (p DockerPlatformList) Intersection(other DockerPlatformList) DockerPlatformList {
+	otherMap := make(map[DockerPlatform]struct{})
+	for _, platform := range other {
+		otherMap[platform] = struct{}{}
+	}
+	newList := make(DockerPlatformList, 0, len(p))
+	for _, platform := range p {
+		if _, ok := otherMap[platform]; ok {
+			newList = append(newList, platform)
+		}
+	}
+	return newList
 }

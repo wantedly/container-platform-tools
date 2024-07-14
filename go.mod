@@ -69,5 +69,6 @@ require (
 	github.com/spf13/pflag v1.0.5 // indirect
 	gopkg.in/yaml.v3 v3.0.1
 	k8s.io/client-go v0.30.2
+	k8s.io/metrics v0.30.2
 	sigs.k8s.io/controller-runtime v0.18.4
 )

@@ -125,6 +125,30 @@ func (p *DockerPlatform) UnmarshalYAML(value *yaml.Node) error {
 	return nil
 }
 
+func (p DockerPlatform) Cmp(other DockerPlatform) int {
+	if p.OS < other.OS {
+		return -1
+	} else if p.OS > other.OS {
+		return 1
+	}
+	if p.Architecture < other.Architecture {
+		return -1
+	} else if p.Architecture > other.Architecture {
+		return 1
+	}
+	if p.Variant < other.Variant {
+		return -1
+	} else if p.Variant > other.Variant {
+		return 1
+	}
+	return 0
+}
+
+func (p DockerPlatform) Variantless() DockerPlatform {
+	p.Variant = ""
+	return p
+}
+
 func MustParseDockerPlatform(platform string) DockerPlatform {
 	p, err := ParseDockerPlatform(platform)
 	if err != nil {
