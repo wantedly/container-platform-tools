@@ -7,6 +7,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/wantedly/container-platform-tools/dockerplatforms"
 	corev1 "k8s.io/api/core/v1"
+	errorutil "k8s.io/apimachinery/pkg/util/errors"
 	metricsv1beta1 "k8s.io/metrics/pkg/apis/metrics/v1beta1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
@@ -24,6 +25,7 @@ type Row struct {
 	HasViolation         bool
 	CPUUsage             float64
 	MemoryUsage          float64
+	Error                string
 }
 
 func EvaluateObjects(
@@ -35,7 +37,7 @@ func EvaluateObjects(
 	nodePlatforms dockerplatforms.DockerPlatformList,
 	platformInspector dockerplatforms.PlatformInspector,
 	processors []KindProcessor,
-) ([]Row, error) {
+) ([]Row, errorutil.Aggregate) {
 	nodePlatforms = nodePlatforms.Variantless()
 	nodesByName := make(map[string]*corev1.Node)
 	for _, node := range nodes {
@@ -47,6 +49,7 @@ func EvaluateObjects(
 	}
 
 	var rows []Row
+	var errs []error
 	for _, obj := range objs {
 		var virtualPods []VirtualPod
 		for _, processor := range processors {
@@ -58,10 +61,15 @@ func EvaluateObjects(
 		for _, virtualPod := range virtualPods {
 			row, err := evaluateVirtualPod(ctx, obj, nodesByName, metricsesByName, nodePlatforms, platformInspector, virtualPod)
 			if err != nil {
-				return nil, errors.Wrap(err, "evaluating pod platforms")
+				for _, err := range err.Errors() {
+					errs = append(errs, errors.Wrap(err, "evaluating pod platforms"))
+				}
 			}
 			rows = append(rows, row)
 		}
+	}
+	if len(errs) > 0 {
+		return rows, errorutil.NewAggregate(errs)
 	}
 	return rows, nil
 }
@@ -74,7 +82,7 @@ func evaluateVirtualPod(
 	nodePlatforms dockerplatforms.DockerPlatformList,
 	platformInspector dockerplatforms.PlatformInspector,
 	virtualPod VirtualPod,
-) (Row, error) {
+) (Row, errorutil.Aggregate) {
 	var scheduledPlatform *dockerplatforms.DockerPlatform
 	var cpuUsage float64
 	var memoryUsage float64
@@ -103,10 +111,12 @@ func evaluateVirtualPod(
 	imagePlatformDetails := make(map[string]dockerplatforms.DockerPlatformList)
 	var imagePlatforms dockerplatforms.DockerPlatformList
 	found := false
+	var errs []error
 	for _, container := range virtualPod.Spec.Containers {
 		platforms, err := platformInspector.GetPlatforms(ctx, container.Image)
 		if err != nil {
-			return Row{}, errors.Wrap(err, "inspecting image platforms")
+			errs = append(errs, errors.Wrap(err, "inspecting image platforms"))
+			continue
 		}
 		platforms2 := dockerplatforms.DockerPlatformList(platforms).Variantless()
 		imagePlatformDetails[container.Name] = platforms2
@@ -120,7 +130,7 @@ func evaluateVirtualPod(
 	if !found {
 		imagePlatforms = nodePlatforms
 	}
-	return Row{
+	row := Row{
 		Namespace:            obj.GetNamespace(),
 		APIVersion:           obj.GetObjectKind().GroupVersionKind().GroupVersion().String(),
 		Kind:                 obj.GetObjectKind().GroupVersionKind().Kind,
@@ -133,5 +143,10 @@ func evaluateVirtualPod(
 		HasViolation:         !imagePlatforms.Includes(declaredPlatforms),
 		CPUUsage:             cpuUsage,
 		MemoryUsage:          memoryUsage,
-	}, nil
+	}
+	if len(errs) > 0 {
+		row.Error = errs[0].Error()
+		return row, errorutil.NewAggregate(errs)
+	}
+	return row, nil
 }
