@@ -16,7 +16,7 @@ require (
 	github.com/containers/ocicrypt v1.1.10 // indirect
 	github.com/containers/storage v1.54.0 // indirect
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc // indirect
-	github.com/docker/docker v26.1.3+incompatible // indirect
+	github.com/docker/docker v26.1.4+incompatible // indirect
 	github.com/emicklei/go-restful/v3 v3.11.0 // indirect
 	github.com/evanphx/json-patch/v5 v5.9.0 // indirect
 	github.com/go-logr/logr v1.4.1 // indirect
@@ -63,7 +63,7 @@ require (
 )
 
 require (
-	github.com/argoproj/argo-workflows/v3 v3.5.8
+	github.com/argoproj/argo-workflows/v3 v3.5.13
 	github.com/containers/image/v5 v5.31.1
 	github.com/google/go-cmp v0.6.0
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
