@@ -198,7 +198,8 @@ func TestYAMLSetWrite(t *testing.T) {
 		t.Fatal(err)
 	}
 	if diff := cmp.Diff(string(content), `docker.io/library/golang:latest:
-    platforms: linux/386, linux/amd64, linux/arm64, linux/arm/v7, linux/mips64le, linux/ppc64le, linux/s390x, windows/amd64
+  platforms: linux/386, linux/amd64, linux/arm64, linux/arm/v7, linux/mips64le, linux/ppc64le,
+    linux/s390x, windows/amd64
 `); diff != "" {
 		t.Errorf("cache file (-want +got):\n%s", diff)
 	}
@@ -207,7 +208,8 @@ func TestYAMLSetWrite(t *testing.T) {
 func TestYAMLReadGet(t *testing.T) {
 	ctx := context.Background()
 	env, cache, err := setupYAML(ctx, "TestYAMLReadGet", `docker.io/library/golang:latest:
-    platforms: linux/386, linux/amd64, linux/arm64, linux/arm/v7, linux/mips64le, linux/ppc64le, linux/s390x, windows/amd64
+  platforms: linux/386, linux/amd64, linux/arm64, linux/arm/v7, linux/mips64le, linux/ppc64le,
+    linux/s390x, windows/amd64
 `)
 	if err != nil {
 		t.Fatal(err)
@@ -255,8 +257,8 @@ func TestYAMLSetErrorWrite(t *testing.T) {
 		t.Fatal(err)
 	}
 	if diff := cmp.Diff(string(content), `docker.io/library/golang:latest:
-    platforms: ""
-    error: failed to retrieve
+  error: failed to retrieve
+  platforms: ""
 `); diff != "" {
 		t.Errorf("cache file (-want +got):\n%s", diff)
 	}
@@ -265,8 +267,8 @@ func TestYAMLSetErrorWrite(t *testing.T) {
 func TestYAMLReadErrorGet(t *testing.T) {
 	ctx := context.Background()
 	env, cache, err := setupYAML(ctx, "TestYAMLReadErrorGet", `docker.io/library/golang:latest:
-    platforms: ""
-    error: failed to retrieve
+  error: failed to retrieve
+  platforms: ""
 `)
 	if err != nil {
 		t.Fatal(err)

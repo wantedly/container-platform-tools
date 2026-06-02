@@ -6,7 +6,7 @@ import (
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/wantedly/container-platform-tools/dockerplatforms"
-	"gopkg.in/yaml.v3"
+	"sigs.k8s.io/yaml"
 )
 
 func TestDockerPlatformListString(t *testing.T) {
@@ -200,7 +200,7 @@ func TestParseDockerPlatformList(t *testing.T) {
 				t.Errorf("unexpected error: %v", err)
 			}
 		} else if tc.yaml != "" {
-			if err := yaml.Unmarshal([]byte(tc.yaml), &p); err != nil {
+			if err := yaml.UnmarshalStrict([]byte(tc.yaml), &p); err != nil {
 				t.Errorf("unexpected error: %v", err)
 			}
 		}

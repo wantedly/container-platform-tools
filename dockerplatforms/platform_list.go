@@ -4,16 +4,12 @@ import (
 	"encoding/json"
 	"slices"
 	"strings"
-
-	"gopkg.in/yaml.v3"
 )
 
 type DockerPlatformList []DockerPlatform
 
 var _ json.Unmarshaler = &DockerPlatformList{}
 var _ json.Marshaler = &DockerPlatformList{}
-var _ yaml.Unmarshaler = &DockerPlatformList{}
-var _ yaml.Marshaler = &DockerPlatformList{}
 
 func (l DockerPlatformList) String() string {
 	platforms := make([]string, len(l))
@@ -48,25 +44,6 @@ func (p DockerPlatformList) MarshalJSON() ([]byte, error) {
 func (p *DockerPlatformList) UnmarshalJSON(data []byte) error {
 	var s string
 	err := json.Unmarshal(data, &s)
-	if err != nil {
-		return err
-	}
-
-	parsed, err := ParseDockerPlatformList(s)
-	if err != nil {
-		return err
-	}
-	*p = parsed
-	return nil
-}
-
-func (p DockerPlatformList) MarshalYAML() (interface{}, error) {
-	return p.String(), nil
-}
-
-func (p *DockerPlatformList) UnmarshalYAML(value *yaml.Node) error {
-	var s string
-	err := value.Decode(&s)
 	if err != nil {
 		return err
 	}

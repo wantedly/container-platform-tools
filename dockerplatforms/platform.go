@@ -4,8 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"strings"
-
-	"gopkg.in/yaml.v3"
 )
 
 type DockerPlatform struct {
@@ -58,8 +56,6 @@ type DockerPlatform struct {
 
 var _ json.Unmarshaler = &DockerPlatform{}
 var _ json.Marshaler = &DockerPlatform{}
-var _ yaml.Unmarshaler = &DockerPlatform{}
-var _ yaml.Marshaler = &DockerPlatform{}
 
 func (p DockerPlatform) String() string {
 	if p.Variant != "" {
@@ -94,25 +90,6 @@ func (p DockerPlatform) MarshalJSON() ([]byte, error) {
 func (p *DockerPlatform) UnmarshalJSON(data []byte) error {
 	var s string
 	err := json.Unmarshal(data, &s)
-	if err != nil {
-		return err
-	}
-
-	parsed, err := ParseDockerPlatform(s)
-	if err != nil {
-		return err
-	}
-	*p = parsed
-	return nil
-}
-
-func (p DockerPlatform) MarshalYAML() (interface{}, error) {
-	return p.String(), nil
-}
-
-func (p *DockerPlatform) UnmarshalYAML(value *yaml.Node) error {
-	var s string
-	err := value.Decode(&s)
 	if err != nil {
 		return err
 	}

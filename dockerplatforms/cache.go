@@ -7,7 +7,7 @@ import (
 	"syscall"
 
 	"github.com/pkg/errors"
-	"gopkg.in/yaml.v3"
+	"sigs.k8s.io/yaml"
 )
 
 type Cache interface {
@@ -82,7 +82,7 @@ func (c *YAMLCache) open(_ context.Context) error {
 	if err != nil {
 		return errors.Wrap(err, "reading the cache file")
 	}
-	err = yaml.Unmarshal(yamlText, &c.oldData)
+	err = yaml.UnmarshalStrict(yamlText, &c.oldData)
 	if err != nil {
 		return errors.Wrap(err, "parsing the cache YAML")
 	}
@@ -110,7 +110,7 @@ func (c *YAMLCache) WriteBack(ctx context.Context) error {
 	if err != nil {
 		return errors.Wrap(err, "reading the cache file")
 	}
-	err = yaml.Unmarshal(oldYAMLText, &c.oldData)
+	err = yaml.UnmarshalStrict(oldYAMLText, &c.oldData)
 	if err != nil {
 		return errors.Wrap(err, "parsing the cache YAML")
 	}
@@ -178,6 +178,6 @@ func (c *YAMLCache) SetErrorCache(ctx context.Context, image string, err error) 
 }
 
 type imageData struct {
-	Platforms DockerPlatformList `json:"platforms" yaml:"platforms"`
-	Error     string             `json:"error,omitempty" yaml:"error,omitempty"`
+	Platforms DockerPlatformList `json:"platforms"`
+	Error     string             `json:"error,omitempty"`
 }
