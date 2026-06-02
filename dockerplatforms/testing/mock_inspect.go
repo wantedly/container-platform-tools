@@ -22,6 +22,7 @@ import (
 type MockPlatformInspector struct {
 	ctrl     *gomock.Controller
 	recorder *MockPlatformInspectorMockRecorder
+	isgomock struct{}
 }
 
 // MockPlatformInspectorMockRecorder is the mock recorder for MockPlatformInspector.
@@ -60,6 +61,7 @@ func (mr *MockPlatformInspectorMockRecorder) GetPlatforms(ctx, image any) *gomoc
 type MocknamedTaggedDigested struct {
 	ctrl     *gomock.Controller
 	recorder *MocknamedTaggedDigestedMockRecorder
+	isgomock struct{}
 }
 
 // MocknamedTaggedDigestedMockRecorder is the mock recorder for MocknamedTaggedDigested.

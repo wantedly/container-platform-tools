@@ -20,6 +20,7 @@ import (
 type MockManifestRetriever struct {
 	ctrl     *gomock.Controller
 	recorder *MockManifestRetrieverMockRecorder
+	isgomock struct{}
 }
 
 // MockManifestRetrieverMockRecorder is the mock recorder for MockManifestRetriever.
