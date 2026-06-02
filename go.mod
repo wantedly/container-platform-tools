@@ -1,6 +1,6 @@
 module github.com/wantedly/container-platform-tools
 
-go 1.22.5
+go 1.26.3
 
 require (
 	github.com/opencontainers/go-digest v1.0.1-0.20240426182413-22b78e47854a
