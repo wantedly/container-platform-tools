@@ -1,4 +1,4 @@
-//go:generate go run go.uber.org/mock/mockgen -source=manifest_retriever.go -destination=testing/mock_manifest_retriever.go -package=dockerplatformstesting
+//go:generate go tool mockgen -source=manifest_retriever.go -destination=testing/mock_manifest_retriever.go -package=dockerplatformstesting
 package dockerplatforms
 
 import (

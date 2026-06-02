@@ -1,4 +1,4 @@
-//go:generate go run go.uber.org/mock/mockgen -source=inspect.go -destination=testing/mock_inspect.go -package=dockerplatformstesting
+//go:generate go tool mockgen -source=inspect.go -destination=testing/mock_inspect.go -package=dockerplatformstesting
 package dockerplatforms
 
 import (

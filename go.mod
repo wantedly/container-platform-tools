@@ -73,3 +73,5 @@ require (
 	k8s.io/metrics v0.30.2
 	sigs.k8s.io/controller-runtime v0.18.4
 )
+
+tool go.uber.org/mock/mockgen
