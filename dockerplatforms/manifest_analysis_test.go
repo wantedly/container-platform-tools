@@ -5,10 +5,10 @@ import (
 	"os"
 	"testing"
 
-	"github.com/containers/image/v5/docker/reference"
 	"github.com/google/go-cmp/cmp"
 	"github.com/wantedly/container-platform-tools/dockerplatforms"
 	dockerplatformstesting "github.com/wantedly/container-platform-tools/dockerplatforms/testing"
+	"go.podman.io/image/v5/docker/reference"
 	"go.uber.org/mock/gomock"
 )
 

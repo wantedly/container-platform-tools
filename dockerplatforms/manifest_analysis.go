@@ -3,10 +3,10 @@ package dockerplatforms
 import (
 	"context"
 
-	"github.com/containers/image/v5/docker/reference"
-	"github.com/containers/image/v5/manifest"
-	"github.com/containers/image/v5/types"
 	"github.com/pkg/errors"
+	"go.podman.io/image/v5/docker/reference"
+	"go.podman.io/image/v5/manifest"
+	"go.podman.io/image/v5/types"
 )
 
 func AnalyzeManifest(ctx context.Context, imageRef reference.Named, retriever ManifestRetriever) ([]DockerPlatform, error) {
