@@ -11,6 +11,7 @@ import (
 	"k8s.io/client-go/rest"
 	"k8s.io/metrics/pkg/client/clientset/versioned"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/client/apiutil"
 )
 
 type Collector struct {
@@ -48,6 +49,16 @@ func (c Collector) Collect(
 		processorObjs, err := processor.Retrieve(ctx, c.RESTConfig, clientset)
 		if err != nil {
 			return nil, errors.Wrap(err, "failed to retrieve objects")
+		}
+		// Typed clientsets strip TypeMeta from listed items; restore it from
+		// the processor's scheme so downstream code can read APIVersion/Kind.
+		scheme := processor.Scheme()
+		for _, obj := range processorObjs {
+			gvk, err := apiutil.GVKForObject(obj, scheme)
+			if err != nil {
+				return nil, errors.Wrapf(err, "looking up GVK for %T", obj)
+			}
+			obj.GetObjectKind().SetGroupVersionKind(gvk)
 		}
 		objs = append(objs, processorObjs...)
 	}

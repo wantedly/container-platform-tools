@@ -5,9 +5,11 @@ import (
 
 	workflowv1alpha1 "github.com/argoproj/argo-workflows/v4/pkg/apis/workflow/v1alpha1"
 	versioned "github.com/argoproj/argo-workflows/v4/pkg/client/clientset/versioned"
+	argoscheme "github.com/argoproj/argo-workflows/v4/pkg/client/clientset/versioned/scheme"
 	"github.com/pkg/errors"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -32,6 +34,11 @@ func (w WorkflowProcessor) Retrieve(ctx context.Context, config *rest.Config, _c
 		objs[i] = &workflows.Items[i]
 	}
 	return objs, nil
+}
+
+// Scheme implements KindProcessor.
+func (w WorkflowProcessor) Scheme() *runtime.Scheme {
+	return argoscheme.Scheme
 }
 
 // IsActive implements KindProcessor.

@@ -6,7 +6,9 @@ import (
 	"github.com/pkg/errors"
 	appsv1 "k8s.io/api/apps/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/client-go/rest"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
@@ -14,6 +16,11 @@ import (
 type StatefulSetProcessor struct{}
 
 var _ KindProcessor = StatefulSetProcessor{}
+
+// Scheme implements KindProcessor.
+func (p StatefulSetProcessor) Scheme() *runtime.Scheme {
+	return scheme.Scheme
+}
 
 // Retrieve implements KindProcessor.
 func (p StatefulSetProcessor) Retrieve(ctx context.Context, config *rest.Config, clientset *kubernetes.Clientset) ([]client.Object, error) {

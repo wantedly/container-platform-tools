@@ -7,7 +7,9 @@ import (
 	batchv1 "k8s.io/api/batch/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/client-go/rest"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
@@ -15,6 +17,11 @@ import (
 type JobProcessor struct{}
 
 var _ KindProcessor = JobProcessor{}
+
+// Scheme implements KindProcessor.
+func (p JobProcessor) Scheme() *runtime.Scheme {
+	return scheme.Scheme
+}
 
 // Retrieve implements KindProcessor.
 func (p JobProcessor) Retrieve(ctx context.Context, config *rest.Config, clientset *kubernetes.Clientset) ([]client.Object, error) {

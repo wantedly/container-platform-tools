@@ -6,7 +6,9 @@ import (
 	"github.com/pkg/errors"
 	batchv1 "k8s.io/api/batch/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/client-go/rest"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
@@ -14,6 +16,11 @@ import (
 type CronJobProcessor struct{}
 
 var _ KindProcessor = CronJobProcessor{}
+
+// Scheme implements KindProcessor.
+func (c CronJobProcessor) Scheme() *runtime.Scheme {
+	return scheme.Scheme
+}
 
 // Retrieve implements KindProcessor.
 func (c CronJobProcessor) Retrieve(ctx context.Context, config *rest.Config, clientset *kubernetes.Clientset) ([]client.Object, error) {
