@@ -3,6 +3,7 @@ module github.com/wantedly/container-platform-tools
 go 1.26.3
 
 require (
+	github.com/argoproj/argo-workflows/v4 v4.0.5
 	github.com/opencontainers/go-digest v1.0.1-0.20240426182413-22b78e47854a
 	github.com/pkg/errors v0.9.1
 	github.com/spf13/cobra v1.10.2
@@ -42,6 +43,7 @@ require (
 	go.podman.io/storage v1.63.0 // indirect
 	go.yaml.in/yaml/v2 v2.4.3 // indirect
 	go.yaml.in/yaml/v3 v3.0.4 // indirect
+	golang.org/x/exp v0.0.0-20260218203240-3dfff04db8fa // indirect
 	golang.org/x/mod v0.35.0 // indirect
 	golang.org/x/net v0.54.0 // indirect
 	golang.org/x/oauth2 v0.36.0 // indirect
@@ -67,7 +69,6 @@ require (
 )
 
 require (
-	github.com/argoproj/argo-workflows/v3 v3.7.14
 	github.com/google/go-cmp v0.7.0
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
 	github.com/spf13/pflag v1.0.10 // indirect

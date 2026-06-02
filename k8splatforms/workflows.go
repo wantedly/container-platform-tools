@@ -3,8 +3,8 @@ package k8splatforms
 import (
 	"context"
 
-	workflowv1alpha1 "github.com/argoproj/argo-workflows/v3/pkg/apis/workflow/v1alpha1"
-	versioned "github.com/argoproj/argo-workflows/v3/pkg/client/clientset/versioned"
+	workflowv1alpha1 "github.com/argoproj/argo-workflows/v4/pkg/apis/workflow/v1alpha1"
+	versioned "github.com/argoproj/argo-workflows/v4/pkg/client/clientset/versioned"
 	"github.com/pkg/errors"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
