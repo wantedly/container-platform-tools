@@ -25,6 +25,8 @@ type Row struct {
 	HasViolation         bool
 	CPUUsage             float64
 	MemoryUsage          float64
+	CPURequest           float64
+	MemoryRequest        float64
 	Error                string
 }
 
@@ -86,6 +88,8 @@ func evaluateVirtualPod(
 	var scheduledPlatform *dockerplatforms.DockerPlatform
 	var cpuUsage float64
 	var memoryUsage float64
+	var cpuRequest float64
+	var memoryRequest float64
 	if pod, ok := obj.(*corev1.Pod); ok {
 		if node, ok := nodesByName[pod.Spec.NodeName]; ok {
 			scheduledPlatform = &dockerplatforms.DockerPlatform{
@@ -101,6 +105,17 @@ func evaluateVirtualPod(
 				if memoryQuant, ok := container.Usage[corev1.ResourceMemory]; ok {
 					memoryUsage += memoryQuant.AsApproximateFloat64()
 				}
+			}
+		}
+		// Resource requests are counted for Pods only, so that the sum reflects
+		// the real requests scheduled on the cluster rather than the requests of
+		// the higher-level workloads that own the Pods.
+		for _, container := range pod.Spec.Containers {
+			if cpuQuant, ok := container.Resources.Requests[corev1.ResourceCPU]; ok {
+				cpuRequest += cpuQuant.AsApproximateFloat64()
+			}
+			if memoryQuant, ok := container.Resources.Requests[corev1.ResourceMemory]; ok {
+				memoryRequest += memoryQuant.AsApproximateFloat64()
 			}
 		}
 	}
@@ -143,6 +158,8 @@ func evaluateVirtualPod(
 		HasViolation:         !imagePlatforms.Includes(declaredPlatforms),
 		CPUUsage:             cpuUsage,
 		MemoryUsage:          memoryUsage,
+		CPURequest:           cpuRequest,
+		MemoryRequest:        memoryRequest,
 	}
 	if len(errs) > 0 {
 		row.Error = errs[0].Error()

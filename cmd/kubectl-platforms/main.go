@@ -129,6 +129,8 @@ func (c *cmdargs) Run(ctx context.Context) error {
 			"HasViolation",
 			"CPUUsage",
 			"MemoryUsage",
+			"CPURequest",
+			"MemoryRequest",
 			"Error",
 		})
 		if err != nil {
@@ -160,6 +162,8 @@ func (c *cmdargs) Run(ctx context.Context) error {
 				fmt.Sprintf("%v", row.HasViolation),
 				fmt.Sprintf("%v", row.CPUUsage),
 				fmt.Sprintf("%v", row.MemoryUsage),
+				fmt.Sprintf("%v", row.CPURequest),
+				fmt.Sprintf("%v", row.MemoryRequest),
 				row.Error,
 			})
 			if err != nil {
@@ -191,6 +195,8 @@ func (c *cmdargs) Run(ctx context.Context) error {
 				rowCount.numPods++
 				rowCount.cpuSum += row.CPUUsage
 				rowCount.memorySum += row.MemoryUsage
+				rowCount.cpuRequestSum += row.CPURequest
+				rowCount.memoryRequestSum += row.MemoryRequest
 			} else {
 				rowCount.numNonPods++
 			}
@@ -266,6 +272,18 @@ func (c *cmdargs) Run(ctx context.Context) error {
 					return errors.Wrap(err, "writing stats")
 				}
 			}
+			if allCounts.cpuRequestSum > 0 {
+				_, err := fmt.Fprintf(c.stdout, "  CPU request: %v / %v (%v%%)\n", stats[key].cpuRequestSum, allCounts.cpuRequestSum, 100*stats[key].cpuRequestSum/allCounts.cpuRequestSum)
+				if err != nil {
+					return errors.Wrap(err, "writing stats")
+				}
+			}
+			if allCounts.memoryRequestSum > 0 {
+				_, err := fmt.Fprintf(c.stdout, "  Memory request: %v / %v (%v%%)\n", stats[key].memoryRequestSum, allCounts.memoryRequestSum, 100*stats[key].memoryRequestSum/allCounts.memoryRequestSum)
+				if err != nil {
+					return errors.Wrap(err, "writing stats")
+				}
+			}
 		}
 
 		fmt.Fprintf(c.stdout, "Violations:\n")
@@ -304,10 +322,12 @@ func (c *cmdargs) Run(ctx context.Context) error {
 }
 
 type counts struct {
-	numPods    int
-	numNonPods int
-	cpuSum     float64
-	memorySum  float64
+	numPods          int
+	numNonPods       int
+	cpuSum           float64
+	memorySum        float64
+	cpuRequestSum    float64
+	memoryRequestSum float64
 }
 
 func (c counts) Add(other counts) counts {
@@ -315,5 +335,7 @@ func (c counts) Add(other counts) counts {
 	c.numNonPods += other.numNonPods
 	c.cpuSum += other.cpuSum
 	c.memorySum += other.memorySum
+	c.cpuRequestSum += other.cpuRequestSum
+	c.memoryRequestSum += other.memoryRequestSum
 	return c
 }

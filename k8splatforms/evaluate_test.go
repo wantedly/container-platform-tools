@@ -107,10 +107,22 @@ func TestEvaluateObjects(t *testing.T) {
 							{
 								Name:  "container1",
 								Image: "golang",
+								Resources: corev1.ResourceRequirements{
+									Requests: corev1.ResourceList{
+										corev1.ResourceCPU:    *resource.NewScaledQuantity(250, -3),
+										corev1.ResourceMemory: *resource.NewScaledQuantity(100000000, 0),
+									},
+								},
 							},
 							{
 								Name:  "container2",
 								Image: "golang:1.5",
+								Resources: corev1.ResourceRequirements{
+									Requests: corev1.ResourceList{
+										corev1.ResourceCPU:    *resource.NewScaledQuantity(250, -3),
+										corev1.ResourceMemory: *resource.NewScaledQuantity(200000000, 0),
+									},
+								},
 							},
 						},
 					},
@@ -192,9 +204,11 @@ func TestEvaluateObjects(t *testing.T) {
 						"container1": dockerplatforms.MustParseDockerPlatformList("linux/386, linux/amd64, linux/arm, linux/arm64, linux/mips64le, linux/ppc64le, linux/s390x, windows/amd64"),
 						"container2": dockerplatforms.MustParseDockerPlatformList("linux/amd64"),
 					},
-					HasViolation: true,
-					CPUUsage:     0.75,
-					MemoryUsage:  470568037.0,
+					HasViolation:  true,
+					CPUUsage:      0.75,
+					MemoryUsage:   470568037.0,
+					CPURequest:    0.5,
+					MemoryRequest: 300000000.0,
 				},
 			},
 		},
